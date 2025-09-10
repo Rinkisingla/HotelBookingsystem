@@ -1,9 +1,9 @@
 import { User } from '../models/user.models.js'
-import {webhooks} from 'svix'
+import {Webhook} from 'svix'
 
-const clerkwehbook = async(req, res)=>{
+const clerkwebhook = async(req, res)=>{
     try {
-         const whook= new webhooks(process.env.CLERK_WEBHOOK_SECRET);
+         const whook= new Webhook(process.env.CLERK_WEBHOOK_SECRET);
          const headers={
             "svix-id":req.headers["svix-id"],
             "svix-timestamp":req.headers["svix-timestamp"],
@@ -11,9 +11,10 @@ const clerkwehbook = async(req, res)=>{
          };
         
         //now verify
-         await  whook.verify(JSON.stringify(req.body),headers)
-          const {data,type} = req.body
-            const userdata={
+            const payload = req.body.toString();
+    const evt =whook.verify(payload, headers);
+          const {data,type} = evt;
+            const userData={
             _id: data.id,
             email: data.email_addresses[0].email_address,
             username:data.first_name+" "+data.last_name,
@@ -29,7 +30,7 @@ const clerkwehbook = async(req, res)=>{
                 break;
             }
              case "user.deleted":{
-                await User.findByIdAndDelete(data.id, userData);
+                await User.findByIdAndDelete(data.id);
                 break;
             }
             default:break;
@@ -42,4 +43,5 @@ const clerkwehbook = async(req, res)=>{
 
     }
 }
- export default clerkwehbook;
+ 
+ export default clerkwebhook;
